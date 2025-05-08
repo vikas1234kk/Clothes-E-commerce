@@ -3,15 +3,16 @@ import { ShopContext } from '../context/ShopContext'
 import { assets } from '../assets/assets';
 import Title from '../components/Title'
 import ProductItem from '../components/ProductItem'
-
+import Loader from '../components/Loader';  // Import the loader component
 
 const Collection = () => {
-  const { products, search , showSearch } = useContext(ShopContext);
+  const { products, search, showSearch } = useContext(ShopContext);
   const [showFilter, setshowFilter] = useState(false);
   const [filterProducts, setfilterProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setsubCategory] = useState([]);
-  const [sortType, setSortType] = useState('relavent')
+  const [sortType, setSortType] = useState('relavent');
+  const [isLoading, setIsLoading] = useState(true);  // Loading state
 
   const toggleCategory = (e) => {
     if (category.includes(e.target.value)) {
@@ -30,11 +31,11 @@ const Collection = () => {
       setsubCategory(prev => [...prev, e.target.value])
     }
   }
+
   const applyFilter = () => {
     let productsCopy = products.slice();
 
-    {/* search in search bar and get related data */}
-    if(showSearch && search){
+    if (showSearch && search) {
       productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
     }
     if (category.length > 0) {
@@ -45,7 +46,7 @@ const Collection = () => {
       productsCopy = productsCopy.filter(item => subCategory.includes(item.subCategory));
     }
     setfilterProducts(productsCopy);
-
+    setIsLoading(false);  // Stop loading when products are filtered
   }
 
   const sortProduct = () => {
@@ -55,11 +56,9 @@ const Collection = () => {
       case 'low-high':
         setfilterProducts(fpCopy.sort((a, b) => (a.price - b.price)));
         break;
-
       case 'high-low':
         setfilterProducts(fpCopy.sort((a, b) => (b.price - a.price)));
         break;
-
       default:
         applyFilter();
         break;
@@ -68,15 +67,15 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter();
-  }, [category, subCategory,search,showSearch,products]);
+  }, [category, subCategory, search, showSearch, products]);
 
   useEffect(() => {
     sortProduct();
-  },[sortType]);
+  }, [sortType]);
 
   return (
     <div className='flex flex-cols sm:flex-row gap-1 sm:gap-10 pt-10 border-t'>
-      {/* filter options */}
+      {/* Filter options */}
       <div className='min-w-60 '>
         <p onClick={() => setshowFilter(!showFilter)} className=' my-2 text-xl flex items-center cursor-pointer gap-2'>FILTERS</p>
         <img className={`h-3 sm:hidden  ${showFilter ? 'rotate-90' : ''}`} src={assets.dropdown_icon} alt="" />
@@ -113,13 +112,11 @@ const Collection = () => {
 
       </div>
 
-
-      {/* right side  */}
-
+      {/* Right side  */}
       <div className='flex-1'>
         <div className='flex justify-between text-base sm:text-2xl mb-4'>
           <Title text1={'ALL'} text2={'COLLECTION'} />
-          {/* prduct sort */}
+          {/* Product sort */}
           <select onChange={(e) => setSortType(e.target.value)} className='border-2 bg-gray-200 border-gray-300 px-2 text-sm' >
             <option value="relavent">Sortby: Relavent</option>
             <option value="low-high">Sortby: Low to High</option>
@@ -127,19 +124,22 @@ const Collection = () => {
           </select>
         </div>
 
-        {/* map products */}
-        <div className='grid grid-cols-2  md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6 '>
-          {
-            filterProducts.map((item, index) => (
+        {/* Show loader until data is available */}
+        {isLoading ? (
+          <div className="flex justify-center items-center">
+            <Loader />
+          </div>
+        ) : (
+          // Map filtered products
+          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
+            {filterProducts.map((item, index) => (
               <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} />
-            ))
-          }
-
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-
     </div>
   )
 }
 
-export default Collection
+export default Collection;
